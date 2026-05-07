@@ -7,8 +7,8 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-settings',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './settings.html',
-  styleUrls: ['./settings.css']
+  templateUrl: './treasurer-settings.html',
+  styleUrls: ['./treasurer-settings.css']
 })
 export class Settings implements OnInit {
 

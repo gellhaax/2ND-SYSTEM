@@ -1,33 +1,76 @@
 import { Routes } from '@angular/router';
+import { adminGuard, treasurerGuard } from './guards/auth-guard';
 
 export const routes: Routes = [
+
   {
     path: 'login',
-    loadComponent: () => import('./login/login').then(m => m.Login)
+    loadComponent: () =>
+      import('./login/login').then(m => m.Login)
   },
+
+  // ================= ADMIN =================
   {
-    path: 'home',
-    loadComponent: () => import('./home/home').then(m => m.Home)
+    path: 'admin-dashboard',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./pages/admin-dashboard/admin-dashboard')
+        .then(m => m.AdminDashboardComponent)
   },
+
+  // ================= TREASURER =================
   {
-  path: 'records',
-  loadComponent: () => import('./records/records').then(m => m.Records)
-},
-  {
-    path: 'settings',
-    loadComponent: () => import('./settings/settings').then(m => m.Settings)
+    path: 'treasurer-dashboard',
+    canActivate: [treasurerGuard],
+    loadComponent: () =>
+      import('./pages/treasurer/treasurer-dashboard/treasurer-dashboard')
+        .then(m => m.TreasurerDashboard)
   },
+
   {
-    path: 'about',
-    loadComponent: () => import('./about/about').then(m => m.About)
+    path: 'treasurer-home',
+    canActivate: [treasurerGuard],
+    loadComponent: () =>
+      import('./pages/treasurer/treasurer-home/treasurer-home')
+        .then(m => m.Home)
   },
+
   {
-    path: 'contact',
-    loadComponent: () => import('./contact/contact').then(m => m.Contact)
+    path: 'treasurer-records',
+    canActivate: [treasurerGuard],
+    loadComponent: () =>
+      import('./pages/treasurer/treasurer-records/treasurer-records')
+        .then(m => m.Records)
   },
+
+  {
+    path: 'treasurer-settings',
+    canActivate: [treasurerGuard],
+    loadComponent: () =>
+      import('./pages/treasurer/treasurer-settings/treasurer-settings')
+        .then(m => m.Settings)
+  },
+
+  {
+    path: 'treasurer-about',
+    canActivate: [treasurerGuard],
+    loadComponent: () =>
+      import('./pages/treasurer/treasurer-about/treasurer-about')
+        .then(m => m.About)
+  },
+
+  {
+    path: 'treasurer-contact',
+    canActivate: [treasurerGuard],
+    loadComponent: () =>
+      import('./pages/treasurer/treasurer-contact/treasurer-contact')
+        .then(m => m.TreasurerContactComponent)
+  },
+
   {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full'
   }
+
 ];

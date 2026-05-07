@@ -95,22 +95,35 @@ export class Login {
   }
 
   login() {
+
   const users = JSON.parse(localStorage.getItem('users') || '[]');
+
   const user = users.find(
-    (u: any) => u.username === this.loginUsername && u.password === this.loginPassword
+    (u: any) =>
+      u.username === this.loginUsername &&
+      u.password === this.loginPassword
   );
 
   if (!user) {
+
     this.loginError = 'Invalid username or password!';
     return;
+
   }
 
-  // Save logged-in user
+  // SAVE LOGGED-IN USER
   localStorage.setItem('currentUser', JSON.stringify(user));
 
-  // Navigate to home page after login
-  this.router.navigate(['/home']);
+  // ROLE BASED REDIRECT
+  if (user.role === 'admin') {
+
+    this.router.navigate(['/admin-dashboard']);
+
+  } else if (user.role === 'treasurer') {
+
+    this.router.navigate(['/home']);
 
   }
-  
+
+}
 }

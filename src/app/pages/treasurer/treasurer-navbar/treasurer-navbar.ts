@@ -5,8 +5,8 @@ import { RouterModule } from '@angular/router';
   selector: 'app-navbar',
   standalone: true,
   imports: [RouterModule],
-  templateUrl: './navbar.html',
-  styleUrls: ['./navbar.css']
+  templateUrl: './treasurer-navbar.html',
+  styleUrls: ['./treasurer-navbar.css']
 })
 export class Navbar {
   logout() {

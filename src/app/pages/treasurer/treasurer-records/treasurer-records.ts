@@ -6,8 +6,8 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-records',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './records.html',
-  styleUrls: ['./records.css']
+  templateUrl: './treasurer-records.html',
+  styleUrls: ['./treasurer-records.css']
 })
 export class Records implements OnInit {
 

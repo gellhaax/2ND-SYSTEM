@@ -5,8 +5,8 @@ import { CommonModule } from '@angular/common';
   selector: 'app-about',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './about.html',
-  styleUrls: ['./about.css']
+  templateUrl: './treasurer-about.html',
+  styleUrls: ['./treasurer-about.css']
   
 })
 export class About {

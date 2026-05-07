@@ -1,4 +1,4 @@
-/* 🌆 FULL PAGE BACKGROUND */
+
 .page-bg {
   min-height: 100vh;
   background: linear-gradient(135deg, #6e1f2f, #7b2c3a);
@@ -145,7 +145,7 @@ input {
   background: #3a2a2a;
   color: white;
 }
-/* 🌙 DARK MODE FIX - ACCOUNT INFO VALUES */
+
 :host-context(body.dark-mode) .info-row .right {
   color: #ffd6ec !important; /* light pink readable */
 }
