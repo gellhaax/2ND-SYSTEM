@@ -18,19 +18,19 @@ export const routes: Routes = [
         .then(m => m.AdminDashboard)
   },
   {
-    path: 'admin-records',
-    canActivate: [adminGuard],
-    loadComponent: () =>
-      import('./pages/admin/admin-records/admin-records')
-        .then(m => m.AdminRecords)
-  },
-  {
-    path: 'admin-notifications',
-    canActivate: [adminGuard],
-    loadComponent: () =>
-      import('./pages/admin/admin-notifications/admin-notifications')
-        .then(m => m.AdminNotifications)
-  },
+  path: 'admin-records',
+  canActivate: [adminGuard],
+  loadComponent: () =>
+    import('./pages/admin/admin-records/admin-records')
+      .then(m => m.AdminRecords)
+},
+{
+  path: 'admin-notifications',
+  canActivate: [adminGuard],
+  loadComponent: () =>
+    import('./pages/admin/admin-notifications/admin-notifications')
+      .then(m => m.AdminNotifications)
+},
 
   // ================= TREASURER =================
   {

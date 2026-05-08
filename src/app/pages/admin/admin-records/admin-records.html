@@ -1,1 +1,114 @@
-<p>admin-records works!</p>
+<div class="admin-layout">
+  <app-admin-navbar></app-admin-navbar>
+
+  <div class="admin-main">
+
+    <!-- HEADER -->
+    <div class="admin-topbar">
+      <div>
+        <h1>Records</h1>
+        <p>View and manage all school fee records.</p>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="admin-search-bar">
+      <input
+        type="text"
+        placeholder="🔎 Search by Student ID..."
+        [(ngModel)]="searchId"
+        (input)="searchStudent()">
+    </div>
+
+    <!-- TABLE -->
+    <div class="admin-card">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>Course</th>
+            <th>Year</th>
+            <th>Total Paid</th>
+            <th>Balance</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of getAllStudents(); let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ s.studentId }}</td>
+            <td>{{ s.firstName }} {{ s.lastName }}</td>
+            <td>{{ s.course }}</td>
+            <td>{{ s.year }}</td>
+            <td class="paid-val">₱{{ getTotalPaid(s) | number: '1.2-2' }}</td>
+            <td class="balance-val">₱{{ getTotalBalance(s) | number: '1.2-2' }}</td>
+            <td class="actions">
+              <button class="view-btn" (click)="viewStudent(s)">👁 View</button>
+              <button class="delete-btn" (click)="deleteStudent(s.studentId)">🗑 Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="getAllStudents().length === 0" class="admin-empty">
+        No records found.
+      </div>
+    </div>
+
+    <!-- VIEW STUDENT MODAL -->
+    <div class="admin-modal-overlay" *ngIf="selectedStudent" (click)="closeView()">
+      <div class="admin-modal" (click)="$event.stopPropagation()">
+
+        <div class="modal-header">
+          <h3>👤 Student Details</h3>
+          <button class="close-btn" (click)="closeView()">✕</button>
+        </div>
+
+        <div class="modal-info">
+          <p><strong>Student ID:</strong> {{ selectedStudent.studentId }}</p>
+          <p><strong>Name:</strong> {{ selectedStudent.firstName }} {{ selectedStudent.middleName }} {{ selectedStudent.lastName }}</p>
+          <p><strong>Course:</strong> {{ selectedStudent.course }}</p>
+          <p><strong>Year:</strong> {{ selectedStudent.year }}</p>
+        </div>
+
+        <h4>Payment History</h4>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Fee</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of selectedStudent.transactions; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ t.date }}</td>
+              <td>{{ t.fee }}</td>
+              <td>₱{{ t.amount | number: '1.2-2' }}</td>
+              <td>{{ t.method }}</td>
+              <td>
+                <span [class]="t.status === 'Paid' ? 'admin-badge paid' : 'admin-badge partial'">
+                  {{ t.status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="modal-footer">
+          <button class="delete-btn" (click)="deleteStudent(selectedStudent.studentId)">
+            🗑 Delete Student
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

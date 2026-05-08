@@ -11,7 +11,7 @@ import { Navbar } from '../treasurer-navbar/treasurer-navbar';
   styleUrls: ['./treasurer-records.css']
 })
 export class Records implements OnInit {
-  // ... keep all your existing code exactly the same
+
   searchId = '';
   records: any[] = [];
   filteredRecords: any[] = [];
@@ -19,12 +19,15 @@ export class Records implements OnInit {
   showTransactionForm = false;
   selectedRecord: any = null;
   selectedIndex = -1;
+  pendingApproval: any = null; 
+
   feeMap: any = {
     "Organization fee": 100,
     "Usg Fee": 500,
     "Miscellaneous fee": 1000,
     "Tuition fee": 5000
   };
+
   newRecord: any = this.getEmptyRecord();
   newTransaction: any = this.getEmptyTransaction();
 
@@ -42,6 +45,40 @@ export class Records implements OnInit {
     });
     this.records = Array.from(uniqueMap.values());
     this.saveToStorage();
+
+    
+    window.addEventListener('storage', () => {
+      this.checkApprovalResult();
+    });
+
+    this.checkApprovalResult();
+  }
+
+  
+  checkApprovalResult() {
+    const result = localStorage.getItem('approvalResult');
+    if (!result) return;
+
+    const parsed = JSON.parse(result);
+
+    if (parsed.status === 'approved') {
+      // Apply the edit
+      const index = this.records.findIndex(r => r.studentId === parsed.data.studentId);
+      if (index > -1) {
+        this.records[index] = { ...this.records[index], ...parsed.data };
+        this.saveToStorage();
+        window.dispatchEvent(new Event('storage'));
+      }
+      localStorage.removeItem('approvalResult');
+      localStorage.removeItem('pendingApproval');
+      alert('Your edit request was APPROVED by the admin!');
+      this.searchStudent();
+
+    } else if (parsed.status === 'rejected') {
+      localStorage.removeItem('approvalResult');
+      localStorage.removeItem('pendingApproval');
+      alert('EDIT ERROR: Your edit request was REJECTED by the admin.');
+    }
   }
 
   getEmptyRecord() {
@@ -122,6 +159,7 @@ export class Records implements OnInit {
 
   openAddForm() { this.showAddForm = true; this.showTransactionForm = false; this.selectedRecord = null; }
   closeAddForm() { this.showAddForm = false; this.newRecord = this.getEmptyRecord(); }
+
   openTransactionForm() {
     if (!this.filteredRecords.length) { alert("Search/select a student first."); return; }
     this.showTransactionForm = true; this.showAddForm = false; this.selectedRecord = null;
@@ -138,14 +176,25 @@ export class Records implements OnInit {
   saveEdit() {
     const duplicate = this.records.find((r, i) => i !== this.selectedIndex && r.studentId === this.selectedRecord.studentId);
     if (duplicate) { alert("Another student with this ID already exists!"); return; }
-    if (this.selectedIndex > -1) {
-      this.records[this.selectedIndex] = { ...this.records[this.selectedIndex], ...this.selectedRecord };
-      this.saveToStorage();
-      window.dispatchEvent(new Event('storage'));
-      alert("Student updated successfully!");
-      this.selectedRecord = null;
-      this.searchStudent();
-    }
+
+    // Save approval request to localStorage for admin to review
+    const approvalRequest = {
+      id: Date.now(),
+      type: 'edit',
+      requestedBy: JSON.parse(localStorage.getItem('currentUser') || '{}').username || 'Treasurer',
+      studentId: this.selectedRecord.studentId,
+      studentName: `${this.selectedRecord.firstName} ${this.selectedRecord.lastName}`,
+      data: this.selectedRecord,
+      originalData: this.records[this.selectedIndex],
+      date: new Date().toLocaleDateString(),
+      status: 'pending'
+    };
+
+    localStorage.setItem('pendingApproval', JSON.stringify(approvalRequest));
+    window.dispatchEvent(new Event('storage'));
+
+    alert("Edit request sent to Admin for approval. Please wait.");
+    this.selectedRecord = null;
   }
 
   cancelEdit() { this.selectedRecord = null; }

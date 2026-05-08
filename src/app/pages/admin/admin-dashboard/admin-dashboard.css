@@ -143,7 +143,7 @@
   color: #94a3b8 !important;
 }
 
-/* ============ BOTTOM SECTION ============ */
+
 .admin-bottom {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -178,7 +178,6 @@
   font-weight: 500;
 }
 
-/* ============ PAYMENTS ============ */
 .admin-payment-item {
   display: flex;
   align-items: center;
@@ -248,7 +247,6 @@
   padding: 20px;
 }
 
-/* ============ ANNOUNCEMENTS ============ */
 .admin-announcement-item {
   display: flex;
   gap: 16px;
