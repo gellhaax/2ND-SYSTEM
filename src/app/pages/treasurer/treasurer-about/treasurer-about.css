@@ -1,0 +1,163 @@
+.about-page {
+  background: #fdf2f6;
+  padding: 60px 40px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* HERO */
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 40px;
+  margin-bottom: 60px;
+  flex-wrap: wrap;
+}
+
+.hero-text {
+  max-width: 600px;
+}
+
+.hero-text h5 {
+  color: #e91e63;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.hero-text h1 {
+  font-size: 48px;
+  margin-bottom: 15px;
+  color: #1a1a1a;
+}
+
+.hero-text p {
+  font-size: 18px;
+  color: #555;
+  line-height: 1.6;
+}
+
+.hero-illustration img {
+  width: 350px;
+
+
+}
+
+/* FEATURES */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 25px;
+  margin-bottom: 70px;
+}
+
+.feature-card {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  text-align: left;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  transition: 0.3s;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.feature-card h3 {
+  margin: 10px 0 5px;
+  color: #333;
+}
+
+.feature-card p {
+  color: #777;
+  font-size: 14px;
+}
+
+/* TEAM */
+.team-section {
+  text-align: center;
+}
+
+.team-section h2 {
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.developers {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.dev-card {
+  background: white;
+  border-radius: 20px;
+  padding: 30px 20px;
+  width: 230px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.dev-card:hover {
+  transform: translateY(-10px);
+}
+
+.dev-card img {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 15px;
+}
+
+.dev-card h3 {
+  font-size: 18px;
+  color: #e91e63;
+  margin-bottom: 5px;
+}
+
+.dev-card span {
+  font-size: 14px;
+  color: #777;
+}
+/* DARK MODE */
+:host-context(body.dark-mode) .about-page {
+  background: #3b1329;
+}
+
+
+:host-context(body.dark-mode) .hero-text h1,
+:host-context(body.dark-mode) .team-section h2 {
+  color: #ffffff;
+}
+
+:host-context(body.dark-mode) .hero-text p,
+:host-context(body.dark-mode) .feature-card p,
+:host-context(body.dark-mode) .dev-card span {
+  color: #cccccc;
+}
+
+
+:host-context(body.dark-mode) .feature-card,
+:host-context(body.dark-mode) .dev-card {
+  background: #3a0e2b;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+
+:host-context(body.dark-mode) .dev-card h3 {
+  color: #ff6fa5;
+}
+
+
+:host-context(body.dark-mode) .feature-card h3 {
+  color: #ffffff;
+}

@@ -1,26 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { Navbar } from './navbar/navbar';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, Navbar, CommonModule],
+  imports: [RouterOutlet, CommonModule],
   templateUrl: './app.html',
   styleUrls: ['./app.css']
 })
 export class AppComponent implements OnInit {
 
-  ngOnInit(): void {
-    const dark = localStorage.getItem('darkMode');
+  private platformId = inject(PLATFORM_ID);
 
-    if (dark === 'true') {
-      document.body.classList.add('dark-mode');
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      const dark = localStorage.getItem('darkMode');
+      if (dark === 'true') {
+        document.body.classList.add('dark-mode');
+      }
     }
   }
 
   get isLoggedIn(): boolean {
-    return typeof window !== 'undefined' && !!localStorage.getItem('currentUser');
+    if (isPlatformBrowser(this.platformId)) {
+      return !!localStorage.getItem('currentUser');
+    }
+    return false;
   }
-}
+} 

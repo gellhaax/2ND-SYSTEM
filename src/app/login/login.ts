@@ -121,7 +121,7 @@ export class Login {
 
   } else if (user.role === 'treasurer') {
 
-    this.router.navigate(['/home']);
+    this.router.navigate(['/treasurer-home']);
 
   }
 
