@@ -11,9 +11,17 @@
     <li><a routerLink="/treasurer-settings" routerLinkActive="active">Settings</a></li>
     <li><a routerLink="/treasurer-about" routerLinkActive="active">About</a></li>
     <li><a routerLink="/treasurer-contact" routerLinkActive="active">Contact</a></li>
-    <li class="role">👤 Treasurer</li>
- 
-   
+   <li class="role">
+  <img
+    *ngIf="profileImage"
+    [src]="profileImage"
+    class="nav-avatar"
+  />
+
+  <span *ngIf="!profileImage">👤</span>
+
+  Treasurer
+</li>
   
   </ul>
 </nav>

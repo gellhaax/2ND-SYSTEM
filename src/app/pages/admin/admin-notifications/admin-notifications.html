@@ -5,98 +5,128 @@
 
     <!-- HEADER -->
     <div class="admin-topbar">
-      <div>
-        <h1>Notifications</h1>
-        <p>Stay updated with important fee-related alerts and announcements.</p>
-      </div>
+      <h1>Request Notifications</h1>
+      <p>Manage approval requests sent by the treasurer.</p>
     </div>
 
-    <!-- STAT CARDS -->
-    <div class="notif-stat-cards">
-      <div class="notif-stat-card blue">
-        <div class="notif-stat-icon">🔔</div>
-        <div>
-          <h2>{{ totalNotifications }}</h2>
-          <p>All Notifications</p>
-        </div>
+    <!-- TOP ACTION BAR -->
+    <div class="top-actions">
+
+      <!-- LEFT -->
+      <div class="left-buttons">
+        <button class="archive-btn" (click)="archiveSelected()">
+          📦 Archive
+        </button>
+
+        <button class="delete-btn" (click)="deleteSelected()">
+          🗑 Delete
+        </button>
       </div>
-      <div class="notif-stat-card green">
-        <div class="notif-stat-icon">✉️</div>
-        <div>
-          <h2>{{ unreadCount }}</h2>
-          <p>Unread</p>
-        </div>
+
+      <!-- RIGHT -->
+      <div class="right-buttons">
+        <button class="approve-btn" (click)="approveSelected()">
+          ✅ Approve
+        </button>
+
+        <button class="decline-btn" (click)="declineSelected()">
+          ❌ Decline
+        </button>
       </div>
-      <div class="notif-stat-card orange">
-        <div class="notif-stat-icon">⚠️</div>
-        <div>
-          <h2>{{ importantCount }}</h2>
-          <p>Important</p>
-        </div>
-      </div>
-      <div class="notif-stat-card purple">
-        <div class="notif-stat-icon">📨</div>
-        <div>
-          <h2>{{ totalNotifications }}</h2>
-          <p>Total Sent</p>
-        </div>
-      </div>
+
     </div>
 
-    <!-- PENDING APPROVAL CARD -->
-    <div class="approval-card" *ngIf="pendingApproval">
-      <div class="approval-header">
-        <span class="approval-badge">⏳ Pending Approval</span>
-        <span class="approval-date">{{ pendingApproval.date }}</span>
-      </div>
-      <h3>Edit Request from Treasurer</h3>
-      <p><strong>Requested by:</strong> {{ pendingApproval.requestedBy }}</p>
-      <p><strong>Student ID:</strong> {{ pendingApproval.studentId }}</p>
-      <p><strong>Student Name:</strong> {{ pendingApproval.studentName }}</p>
-      <div class="approval-changes">
-        <p><strong>Requested Changes:</strong></p>
-        <p>First Name: {{ pendingApproval.data.firstName }}</p>
-        <p>Middle Name: {{ pendingApproval.data.middleName }}</p>
-        <p>Last Name: {{ pendingApproval.data.lastName }}</p>
-        <p>Course: {{ pendingApproval.data.course }}</p>
-        <p>Year: {{ pendingApproval.data.year }}</p>
-      </div>
-      <div class="approval-actions">
-        <button class="approve-btn" (click)="approveEdit()">✅ Approve</button>
-        <button class="reject-btn" (click)="rejectEdit()">❌ Reject</button>
-      </div>
+    <!-- SELECT ALL -->
+    <div class="select-all-card">
+      <label>
+        <input
+          type="checkbox"
+          [checked]="isAllSelected()"
+          (change)="toggleSelectAll($event)"
+        />
+        Select All
+      </label>
     </div>
 
-    <!-- NOTIFICATIONS TABLE -->
-    <div class="admin-card">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Message</th>
-            <th>Type</th>
-            <th>Recipients</th>
-            <th>Date</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let n of notifications">
-            <td><strong>{{ n.title }}</strong></td>
-            <td class="msg-cell">{{ n.message }}</td>
-            <td>
-              <span [class]="'type-badge ' + n.type.toLowerCase()">{{ n.type }}</span>
-            </td>
-            <td>{{ n.recipients }}</td>
-            <td>{{ n.date }}</td>
-            <td>
-              <span [class]="n.status === 'Unread' ? 'status-badge unread' : 'status-badge read'">
-                {{ n.status }}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- REQUEST LIST -->
+    <div class="request-container">
+
+      <div
+        class="request-card"
+        *ngFor="let request of requests"
+      >
+
+        <!-- CHECKBOX -->
+        <div class="checkbox-area">
+          <input
+            type="checkbox"
+            [(ngModel)]="request.selected"
+          />
+        </div>
+
+        <!-- ICON -->
+        <div class="profile-icon">
+          👤
+        </div>
+
+        <!-- CONTENT -->
+        <div class="request-content">
+
+          <div class="request-header">
+            <h3>Edit Request from Treasurer</h3>
+
+            <span class="request-date">
+              📅 {{ request.date }}
+            </span>
+          </div>
+
+          <p class="request-message">
+            Treasurer
+            <strong>{{ request.requestedBy }}</strong>
+            requested changes for student
+            <strong>{{ request.studentName }}</strong>
+            ({{ request.studentId }}).
+          </p>
+
+          <!-- DETAILS -->
+          <div class="details-grid">
+
+            <div>
+              <span>Course:</span>
+              <strong>{{ request.data.course }}</strong>
+            </div>
+
+            <div>
+              <span>Year:</span>
+              <strong>{{ request.data.year }}</strong>
+            </div>
+
+            <div>
+              <span>First Name:</span>
+              <strong>{{ request.data.firstName }}</strong>
+            </div>
+
+            <div>
+              <span>Middle Name:</span>
+              <strong>{{ request.data.middleName }}</strong>
+            </div>
+
+            <div>
+              <span>Last Name:</span>
+              <strong>{{ request.data.lastName }}</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- EMPTY -->
+      <div class="empty-box" *ngIf="requests.length === 0">
+        🔔 No request notifications available.
+      </div>
+
     </div>
 
   </div>

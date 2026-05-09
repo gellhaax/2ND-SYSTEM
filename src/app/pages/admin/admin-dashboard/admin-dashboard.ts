@@ -68,4 +68,75 @@ export class AdminDashboard implements OnInit {
     });
     return all.slice(-5).reverse();
   }
+    get weeklyTotal(): number {
+    const now = new Date();
+
+    const firstDay = new Date(now);
+    firstDay.setDate(now.getDate() - now.getDay());
+
+    const lastDay = new Date(firstDay);
+    lastDay.setDate(firstDay.getDate() + 6);
+
+    let total = 0;
+
+    this.records.forEach(s => {
+      (s.transactions || []).forEach((t: any) => {
+
+        const paymentDate = new Date(t.date);
+
+        if (paymentDate >= firstDay && paymentDate <= lastDay) {
+          total += Number(t.amount || 0);
+        }
+
+      });
+    });
+
+    return total;
+  }
+
+  get monthlyTotal(): number {
+    const now = new Date();
+
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    let total = 0;
+
+    this.records.forEach(s => {
+      (s.transactions || []).forEach((t: any) => {
+
+        const paymentDate = new Date(t.date);
+
+        if (
+          paymentDate.getMonth() === currentMonth &&
+          paymentDate.getFullYear() === currentYear
+        ) {
+          total += Number(t.amount || 0);
+        }
+
+      });
+    });
+
+    return total;
+  }
+
+  get currentMonth(): string {
+    return this.today.toLocaleString('default', {
+      month: 'long',
+      year: 'numeric'
+    });
+  }
+
+  get weekRange(): string {
+
+    const now = new Date();
+
+    const firstDay = new Date(now);
+    firstDay.setDate(now.getDate() - now.getDay());
+
+    const lastDay = new Date(firstDay);
+    lastDay.setDate(firstDay.getDate() + 6);
+
+    return `${firstDay.toLocaleDateString()} - ${lastDay.toLocaleDateString()}`;
+  }
 }

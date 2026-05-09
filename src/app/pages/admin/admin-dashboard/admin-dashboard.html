@@ -95,26 +95,42 @@
         </div>
       </div>
 
-      <!-- ANNOUNCEMENTS -->
+          <!-- WEEKLY & MONTHLY REPORTS -->
       <div class="admin-card">
         <div class="admin-card-header">
-          <h3>System Announcements</h3>
-          <a routerLink="/admin-notifications" class="admin-view-all">View All</a>
+          <h3>Payment Reports</h3>
+          <a routerLink="/admin-records" class="admin-view-all">View Records</a>
         </div>
 
+        <!-- WEEKLY REPORT -->
         <div class="admin-announcement-item">
-          <div class="admin-announcement-icon">📢</div>
+          <div class="admin-announcement-icon">📅</div>
           <div>
-            <h4>Quarterly Fees Collection</h4>
-            <p>Please be reminded that the quarterly fees collection will start on May 25, 2025.</p>
-            <small>May 20, 2025 | Admin</small>
+            <h4>Weekly Payments Report</h4>
+            <p>
+              Total payments collected this week:
+              <strong>₱ {{ weeklyTotal | number:'1.2-2' }}</strong>
+            </p>
+            <small>
+              {{ weekRange }}
+            </small>
+          </div>
+        </div>
+
+        <!-- MONTHLY REPORT -->
+        <div class="admin-announcement-item">
+          <div class="admin-announcement-icon">📊</div>
+          <div>
+            <h4>Monthly Payments Report</h4>
+            <p>
+              Total payments collected this month:
+              <strong>₱ {{ monthlyTotal | number:'1.2-2' }}</strong>
+            </p>
+            <small>
+              {{ currentMonth }}
+            </small>
           </div>
         </div>
 
       </div>
-
-    </div>
-
-  </div>
-
-</div>
+     

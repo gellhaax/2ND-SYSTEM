@@ -1,21 +1,144 @@
+<!-- treasurer-home.html -->
+
 <app-navbar></app-navbar>
+
 <div class="treasurer-page">
-<div class="cards">
-  <div class="card">
-    <h3>Total Cash Payment</h3>
-    <p>₱{{ totalCash | number }}</p>
-    <img src="cash.png" alt="">
+
+  <!-- PAYMENT CARDS -->
+  <div class="cards">
+
+    <div class="card">
+      <h3>Total Cash Payment</h3>
+      <p>₱{{ totalCash | number }}</p>
+      <img src="cash.png" alt="">
+    </div>
+
+    <div class="card">
+      <h3>Total GCash Payment</h3>
+      <p>₱{{ totalGCash | number }}</p>
+      <img src="gcash.png" alt="">
+    </div>
+
+    <div class="card">
+      <h3>Total Payment</h3>
+      <p>₱{{ totalPayment | number }}</p>
+      <img src="total.png" alt="">
+    </div>
+
   </div>
-  <div class="card">
-    <h3>Total GCash Payment</h3>
-    <p>₱{{ totalGCash | number }}</p>
-    <img src="gcash.png" alt="">
+
+  <!-- NOTIFICATION SECTION -->
+  <div class="notification-section">
+
+    <!-- HEADER -->
+    <div class="notif-header">
+
+      <div class="notif-title">
+
+        <div class="notif-icon">
+          🔔
+        </div>
+
+        <div>
+          <h2>Request Notifications</h2>
+          <p>
+            Updates from the administrator regarding your requests.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- NOTIFICATION LIST -->
+    <div
+      class="notif-card"
+      *ngFor="let notif of notifications"
+      [class.read]="notif.read"
+    >
+
+      <!-- STATUS -->
+      <div
+        class="status-icon"
+        [class.approved]="notif.status === 'Approved'"
+        [class.declined]="notif.status === 'Declined'"
+      >
+        {{ notif.status === 'Approved' ? '✔' : '✖' }}
+      </div>
+
+      <!-- CONTENT -->
+      <div class="notif-content">
+
+        <div class="notif-top">
+
+          <div class="notif-left">
+
+            <span
+              class="status-badge"
+              [class.approved-badge]="notif.status === 'Approved'"
+              [class.declined-badge]="notif.status === 'Declined'"
+            >
+              {{ notif.status }}
+            </span>
+
+            <h3>
+              Your request has been
+              {{ notif.status.toLowerCase() }}.
+            </h3>
+
+          </div>
+
+          <div class="notif-date">
+            📅 {{ notif.date }}
+          </div>
+
+        </div>
+
+        <p>
+          {{ notif.message }}
+        </p>
+
+       <div class="notif-actions">
+
+  <button
+    *ngIf="!notif.read"
+    class="mark-read-btn"
+    (click)="markAsRead(notif)"
+  >
+    ✔ Mark as Read
+  </button>
+
+  <button
+    *ngIf="notif.read"
+    class="mark-unread-btn"
+    (click)="markAsUnread(notif)"
+  >
+    ↺ Mark as Unread
+  </button>
+
+  <button
+    class="delete-btn"
+    (click)="deleteNotification(notif)"
+  >
+    🗑 Delete
+  </button>
+
+</div>
+      </div>
+
+    </div>
+
+    <!-- EMPTY -->
+    <div
+      class="empty-state"
+      *ngIf="notifications.length === 0"
+    >
+      No notifications available.
+    </div>
+
   </div>
-  <div class="card">
-    <h3>Total Payment</h3>
-    <p>₱{{ totalPayment | number }}</p>
-    <img src="total.png" alt="">
-  </div>
+
+  <!-- BACKGROUND -->
   <div class="background"></div>
- </div>
+
 </div>

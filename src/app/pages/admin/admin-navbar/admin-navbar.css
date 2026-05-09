@@ -1,5 +1,5 @@
 .sidebar {
-  width: 240px;
+  width: 210px;
   height: 100vh;
   background: linear-gradient(180deg, #0a1628 0%, #0d2137 100%);
   display: flex;
@@ -97,6 +97,9 @@
   font-weight: bold;
   font-size: 14px;
   transition: all 0.3s ease;
+
+  position: relative;
+  bottom: 30px;
 }
 
 .logout-btn:hover {

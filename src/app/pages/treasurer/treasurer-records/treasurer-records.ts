@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Navbar } from '../treasurer-navbar/treasurer-navbar';
@@ -174,28 +174,44 @@ export class Records implements OnInit {
   }
 
   saveEdit() {
-    const duplicate = this.records.find((r, i) => i !== this.selectedIndex && r.studentId === this.selectedRecord.studentId);
-    if (duplicate) { alert("Another student with this ID already exists!"); return; }
 
-    // Save approval request to localStorage for admin to review
-    const approvalRequest = {
-      id: Date.now(),
-      type: 'edit',
-      requestedBy: JSON.parse(localStorage.getItem('currentUser') || '{}').username || 'Treasurer',
-      studentId: this.selectedRecord.studentId,
-      studentName: `${this.selectedRecord.firstName} ${this.selectedRecord.lastName}`,
-      data: this.selectedRecord,
-      originalData: this.records[this.selectedIndex],
-      date: new Date().toLocaleDateString(),
-      status: 'pending'
-    };
-
-    localStorage.setItem('pendingApproval', JSON.stringify(approvalRequest));
-    window.dispatchEvent(new Event('storage'));
-
-    alert("Edit request sent to Admin for approval. Please wait.");
-    this.selectedRecord = null;
+  if (!this.selectedRecord) {
+    alert("No record selected for editing.");
+    return;
   }
+
+  // ✅ SAVE APPROVAL REQUEST
+  const approvalRequest = {
+    id: Date.now(),
+    type: 'edit',
+    requestedBy: JSON.parse(localStorage.getItem('currentUser') || '{}').username || 'Treasurer',
+    studentId: this.selectedRecord.studentId,
+
+    // 🔥 FIXED: correct template string
+    studentName: `${this.selectedRecord.firstName} ${this.selectedRecord.lastName}`,
+
+    data: this.selectedRecord,
+    originalData: this.records[this.selectedIndex],
+    date: new Date().toLocaleDateString(),
+    status: 'pending'
+  };
+
+  // 🔥 FIXED: prevent overwrite (IMPORTANT)
+  const existing = JSON.parse(localStorage.getItem('pendingApproval') || '[]');
+
+  existing.push(approvalRequest);
+
+  localStorage.setItem('pendingApproval', JSON.stringify(existing));
+
+  // 🔥 notify admin
+  window.dispatchEvent(new Event('storage'));
+
+  alert("Edit request sent to Admin for approval. Please wait.");
+
+  // reset state
+  this.selectedRecord = null;
+  this.selectedIndex = -1;
+}
 
   cancelEdit() { this.selectedRecord = null; }
 
