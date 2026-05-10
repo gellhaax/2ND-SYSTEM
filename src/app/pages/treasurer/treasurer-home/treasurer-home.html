@@ -1,5 +1,3 @@
-<!-- treasurer-home.html -->
-
 <app-navbar></app-navbar>
 
 <div class="treasurer-page">
@@ -57,13 +55,13 @@
       [class.read]="notif.read"
     >
 
-      <!-- STATUS -->
+      <!-- STATUS ICON -->
       <div
         class="status-icon"
-        [class.approved]="notif.status === 'Approved'"
-        [class.declined]="notif.status === 'Declined'"
+        [class.approved]="notif.message?.includes('APPROVED')"
+        [class.declined]="notif.message?.includes('REJECTED')"
       >
-        {{ notif.status === 'Approved' ? '✔' : '✖' }}
+        {{ notif.message?.includes('APPROVED') ? '✔' : '✖' }}
       </div>
 
       <!-- CONTENT -->
@@ -73,57 +71,62 @@
 
           <div class="notif-left">
 
+            <!-- STATUS BADGE -->
             <span
               class="status-badge"
-              [class.approved-badge]="notif.status === 'Approved'"
-              [class.declined-badge]="notif.status === 'Declined'"
+              [class.approved-badge]="notif.message?.includes('APPROVED')"
+              [class.declined-badge]="notif.message?.includes('REJECTED')"
             >
-              {{ notif.status }}
+              {{ notif.message?.includes('APPROVED') ? 'Approved' : 'Rejected' }}
             </span>
 
+            <!-- TITLE -->
             <h3>
-              Your request has been
-              {{ notif.status.toLowerCase() }}.
+              {{ notif.message }}
             </h3>
 
           </div>
 
+          <!-- DATE -->
           <div class="notif-date">
-            📅 {{ notif.date }}
+            📅 {{ notif.date | date:'medium' }}
           </div>
 
         </div>
 
+        <!-- MESSAGE -->
         <p>
           {{ notif.message }}
         </p>
 
-       <div class="notif-actions">
+        <!-- ACTIONS -->
+        <div class="notif-actions">
 
-  <button
-    *ngIf="!notif.read"
-    class="mark-read-btn"
-    (click)="markAsRead(notif)"
-  >
-    ✔ Mark as Read
-  </button>
+          <button
+            *ngIf="!notif.read"
+            class="mark-read-btn"
+            (click)="markAsRead(notif)"
+          >
+            ✔ Mark as Read
+          </button>
 
-  <button
-    *ngIf="notif.read"
-    class="mark-unread-btn"
-    (click)="markAsUnread(notif)"
-  >
-    ↺ Mark as Unread
-  </button>
+          <button
+            *ngIf="notif.read"
+            class="mark-unread-btn"
+            (click)="markAsUnread(notif)"
+          >
+            ↺ Mark as Unread
+          </button>
 
-  <button
-    class="delete-btn"
-    (click)="deleteNotification(notif)"
-  >
-    🗑 Delete
-  </button>
+          <button
+            class="delete-btn"
+            (click)="deleteNotification(notif)"
+          >
+            🗑 Delete
+          </button>
 
-</div>
+        </div>
+
       </div>
 
     </div>

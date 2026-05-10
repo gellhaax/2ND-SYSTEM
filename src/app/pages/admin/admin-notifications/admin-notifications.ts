@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { AdminNavbarComponent } from '../admin-navbar/admin-navbar';
 
 @Component({
@@ -12,165 +13,95 @@ import { AdminNavbarComponent } from '../admin-navbar/admin-navbar';
 })
 export class AdminNotifications implements OnInit {
 
+  private apiUrl = 'http://localhost:3000/api';
   requests: any[] = [];
 
-  ngOnInit(): void {
-    this.loadRequests();
+  notifications: any[] = [
+    { title: 'Tuition Fee Reminder', message: 'Tuition fee for 2nd Term is due on May 25, 2024.', type: 'Reminder', recipients: 'All Students', date: 'May 20, 2024', status: 'Unread' },
+    { title: 'Payment Received', message: 'A payment of ₱5,000.00 has been received for Juan Dela Cruz.', type: 'Information', recipients: 'Juan Dela Cruz', date: 'May 19, 2024', status: 'Read' },
+    { title: 'Overdue Notice', message: 'Your account has an overdue balance. Please pay as soon as possible.', type: 'Notice', recipients: 'Parents with Balance', date: 'May 18, 2024', status: 'Read' },
+    { title: 'Upcoming Fee Collection', message: 'Fee collection for 1st Term will start on June 1, 2024.', type: 'Announcement', recipients: 'All Students', date: 'May 17, 2024', status: 'Read' },
+  ];
 
-    // Auto refresh when localStorage changes
-    window.addEventListener('storage', () => {
-      this.loadRequests();
+  constructor(private http: HttpClient) {}
+
+  ngOnInit() { this.loadRequests(); }
+
+  // Load 
+  loadRequests() {
+    this.http.get<any[]>(`${this.apiUrl}/approvals/pending`).subscribe({
+      next: (data) => {
+        this.requests = data.map(r => ({
+          ...r,
+          selected: false,
+          requestedData: typeof r.requestedData === 'string' ? JSON.parse(r.requestedData) : r.requestedData,
+          originalData: typeof r.originalData === 'string' ? JSON.parse(r.originalData) : r.originalData
+        }));
+      },
+      error: (err) => console.error('Error loading approvals:', err)
     });
   }
 
-  // Load requests safely as ARRAY
-  loadRequests() {
-    const pending = JSON.parse(localStorage.getItem('pendingApproval') || '[]');
-
-    this.requests = pending
-      .filter((r: any) => r && r.id)
-      .map((r: any) => ({
-        ...r,
-        selected: false
-      }));
-  }
-
-  // Save requests back to storage
-  saveRequests() {
-    localStorage.setItem('pendingApproval', JSON.stringify(this.requests));
-  }
-
-  // Select all toggle
   toggleSelectAll(event: any) {
     const checked = event.target.checked;
     this.requests.forEach(r => r.selected = checked);
   }
 
-  // Check if all selected
   isAllSelected(): boolean {
-    return this.requests.length > 0 &&
-      this.requests.every(r => r.selected);
+    return this.requests.length > 0 && this.requests.every(r => r.selected);
   }
 
-  // APPROVE REQUESTS
+  //  Approve
   approveSelected() {
-
     const selected = this.requests.filter(r => r.selected);
+    if (selected.length === 0) { alert('Select request first.'); return; }
 
-    if (selected.length === 0) {
-      alert('Select request first.');
-      return;
-    }
+    const approvals = selected.map(r =>
+      this.http.put(`${this.apiUrl}/approvals/${r.id}`, { status: 'approved' }).toPromise()
+    );
 
-    let records = JSON.parse(localStorage.getItem('records') || '[]');
-
-    selected.forEach(req => {
-
-      // EDIT REQUEST
-      if (req.type === 'edit') {
-        const index = records.findIndex(
-          (r: any) => r.studentId === req.studentId
-        );
-
-        if (index > -1) {
-          records[index] = {
-            ...records[index],
-            ...req.data
-          };
-        }
-      }
-
-      // DELETE REQUEST
-      else if (req.type === 'delete') {
-        const student = records.find(
-          (r: any) => r.studentId === req.studentId
-        );
-
-        if (student) {
-          student.transactions.splice(req.transactionIndex, 1);
-        }
-      }
-
-    });
-
-    // Save updated records
-    localStorage.setItem('records', JSON.stringify(records));
-
-    // Send approval result to treasurer
-    localStorage.setItem('approvalResult', JSON.stringify({
-      status: 'approved',
-      time: Date.now()
-    }));
-
-    // Remove processed requests
-    this.requests = this.requests.filter(r => !r.selected);
-    this.saveRequests();
-
-    // Single refresh event only
-    window.dispatchEvent(new Event('storage'));
-
-    alert('Selected requests approved.');
+    Promise.all(approvals).then(() => {
+      // notify treasurer
+      localStorage.setItem('approvalResult', JSON.stringify({ status: 'approved', time: Date.now() }));
+      window.dispatchEvent(new Event('storage'));
+      alert('Selected requests approved.');
+      this.loadRequests();
+    }).catch(err => alert('Error approving requests'));
   }
 
-  // DECLINE REQUESTS
+  // Reject 
   declineSelected() {
-
     const selected = this.requests.filter(r => r.selected);
+    if (selected.length === 0) { alert('Select request first.'); return; }
 
-    if (selected.length === 0) {
-      alert('Select request first.');
-      return;
-    }
+    const rejections = selected.map(r =>
+      this.http.put(`${this.apiUrl}/approvals/${r.id}`, { status: 'rejected' }).toPromise()
+    );
 
-    localStorage.setItem('approvalResult', JSON.stringify({
-      status: 'rejected',
-      time: Date.now()
-    }));
-
-    this.requests = this.requests.filter(r => !r.selected);
-    this.saveRequests();
-
-    window.dispatchEvent(new Event('storage'));
-
-    alert('Selected requests declined.');
+    Promise.all(rejections).then(() => {
+      localStorage.setItem('approvalResult', JSON.stringify({ status: 'rejected', time: Date.now() }));
+      window.dispatchEvent(new Event('storage'));
+      alert('Selected requests declined.');
+      this.loadRequests();
+    }).catch(err => alert('Error declining requests'));
   }
 
-  // ARCHIVE REQUESTS
   archiveSelected() {
-
     const selected = this.requests.filter(r => r.selected);
-
-    if (selected.length === 0) {
-      alert('Select request first.');
-      return;
-    }
-
+    if (selected.length === 0) { alert('Select request first.'); return; }
     this.requests = this.requests.filter(r => !r.selected);
-    this.saveRequests();
-
-    window.dispatchEvent(new Event('storage'));
-
     alert('Selected requests archived.');
   }
 
-  // DELETE REQUESTS
   deleteSelected() {
-
     const selected = this.requests.filter(r => r.selected);
-
-    if (selected.length === 0) {
-      alert('Select request first.');
-      return;
-    }
-
-    const confirmDelete = confirm('Delete selected requests permanently?');
-    if (!confirmDelete) return;
-
+    if (selected.length === 0) { alert('Select request first.'); return; }
+    if (!confirm('Delete selected requests permanently?')) return;
     this.requests = this.requests.filter(r => !r.selected);
-    this.saveRequests();
-
-    window.dispatchEvent(new Event('storage'));
-
     alert('Selected requests deleted.');
   }
+
+  get totalNotifications() { return this.notifications.length + this.requests.length; }
+  get unreadCount() { return this.notifications.filter(n => n.status === 'Unread').length + this.requests.length; }
+  get importantCount() { return this.notifications.filter(n => n.type === 'Notice' || n.type === 'Reminder').length; }
 }

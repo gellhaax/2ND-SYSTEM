@@ -21,11 +21,4 @@ export class AppComponent implements OnInit {
       }
     }
   }
-
-  get isLoggedIn(): boolean {
-    if (isPlatformBrowser(this.platformId)) {
-      return !!localStorage.getItem('currentUser');
-    }
-    return false;
-  }
-} 
+}

@@ -1,6 +1,7 @@
- import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { Navbar } from '../treasurer-navbar/treasurer-navbar';
 
 @Component({
@@ -12,6 +13,8 @@ import { Navbar } from '../treasurer-navbar/treasurer-navbar';
 })
 export class Records implements OnInit {
 
+  private apiUrl = 'http://localhost:3000/api';
+
   searchId = '';
   records: any[] = [];
   filteredRecords: any[] = [];
@@ -19,7 +22,7 @@ export class Records implements OnInit {
   showTransactionForm = false;
   selectedRecord: any = null;
   selectedIndex = -1;
-  pendingApproval: any = null; 
+  pendingApproval: any = null;
 
   feeMap: any = {
     "Organization fee": 100,
@@ -31,54 +34,18 @@ export class Records implements OnInit {
   newRecord: any = this.getEmptyRecord();
   newTransaction: any = this.getEmptyTransaction();
 
+  constructor(private http: HttpClient) {}
+
   ngOnInit() {
-    const data = localStorage.getItem('records');
-    this.records = data ? JSON.parse(data) : [];
-    const uniqueMap = new Map();
-    this.records.forEach((r: any) => {
-      if (!uniqueMap.has(r.studentId)) {
-        uniqueMap.set(r.studentId, r);
-      } else {
-        const existing = uniqueMap.get(r.studentId);
-        existing.transactions = [...(existing.transactions || []), ...(r.transactions || [])];
-      }
-    });
-    this.records = Array.from(uniqueMap.values());
-    this.saveToStorage();
-
-    
-    window.addEventListener('storage', () => {
-      this.checkApprovalResult();
-    });
-
-    this.checkApprovalResult();
+    this.loadRecords();
   }
 
-  
-  checkApprovalResult() {
-    const result = localStorage.getItem('approvalResult');
-    if (!result) return;
 
-    const parsed = JSON.parse(result);
-
-    if (parsed.status === 'approved') {
-      // Apply the edit
-      const index = this.records.findIndex(r => r.studentId === parsed.data.studentId);
-      if (index > -1) {
-        this.records[index] = { ...this.records[index], ...parsed.data };
-        this.saveToStorage();
-        window.dispatchEvent(new Event('storage'));
-      }
-      localStorage.removeItem('approvalResult');
-      localStorage.removeItem('pendingApproval');
-      alert('Your edit request was APPROVED by the admin!');
-      this.searchStudent();
-
-    } else if (parsed.status === 'rejected') {
-      localStorage.removeItem('approvalResult');
-      localStorage.removeItem('pendingApproval');
-      alert('EDIT ERROR: Your edit request was REJECTED by the admin.');
-    }
+  loadRecords() {
+    this.http.get<any[]>(`${this.apiUrl}/students`).subscribe({
+      next: (data) => { this.records = data; },
+      error: (err) => console.error('Error loading records:', err)
+    });
   }
 
   getEmptyRecord() {
@@ -88,8 +55,6 @@ export class Records implements OnInit {
   getEmptyTransaction() {
     return { fee: '', amount: 0, method: '', balance: 0, status: '', date: '', receipt: '' };
   }
-
-  saveToStorage() { localStorage.setItem('records', JSON.stringify(this.records)); }
 
   computeBalance(record: any) {
     const fee = this.feeMap[record.fee] || 0;
@@ -115,6 +80,7 @@ export class Records implements OnInit {
     this.filteredRecords = this.records.filter(r => r.studentId.includes(key));
   }
 
+  //  Add student 
   addRecord() {
     if (!this.newRecord.studentId?.trim()) { alert("Student ID is required!"); return; }
     if (!this.newRecord.firstName?.trim()) { alert("First Name is required!"); return; }
@@ -125,22 +91,38 @@ export class Records implements OnInit {
     if (!this.newRecord.amount) { alert("Amount is required!"); return; }
     if (!this.newRecord.method) { alert("Payment Method is required!"); return; }
     if (!this.newRecord.date) { alert("Date is required!"); return; }
-    const existing = this.records.find(r => String(r.studentId).trim().toLowerCase() === String(this.newRecord.studentId).trim().toLowerCase());
-    if (existing) { alert("Student already exists!"); return; }
+
     this.computeBalance(this.newRecord);
+
     const student = {
-      studentId: this.newRecord.studentId, firstName: this.newRecord.firstName,
-      middleName: this.newRecord.middleName, lastName: this.newRecord.lastName,
-      course: this.newRecord.course, year: this.newRecord.year,
-      transactions: [{ fee: this.newRecord.fee, amount: this.newRecord.amount, method: this.newRecord.method, balance: this.newRecord.balance, status: this.newRecord.status, date: this.newRecord.date, receipt: this.newRecord.receipt }]
+      studentId: this.newRecord.studentId,
+      firstName: this.newRecord.firstName,
+      middleName: this.newRecord.middleName,
+      lastName: this.newRecord.lastName,
+      course: this.newRecord.course,
+      year: this.newRecord.year,
+      transactions: [{
+        fee: this.newRecord.fee,
+        amount: this.newRecord.amount,
+        method: this.newRecord.method,
+        balance: this.newRecord.balance,
+        status: this.newRecord.status,
+        date: this.newRecord.date,
+        receipt: this.newRecord.receipt
+      }]
     };
-    this.records.push(student);
-    this.saveToStorage();
-    window.dispatchEvent(new Event('storage'));
-    alert("Student added successfully!");
-    this.closeAddForm();
+
+    this.http.post<any>(`${this.apiUrl}/students`, student).subscribe({
+      next: () => {
+        alert("Student added successfully!");
+        this.loadRecords();
+        this.closeAddForm();
+      },
+      error: (err) => alert(err.error?.error || "Failed to add student!")
+    });
   }
 
+  // Add transaction 
   addTransaction() {
     const student = this.filteredRecords[0];
     if (!student) return;
@@ -148,13 +130,21 @@ export class Records implements OnInit {
     if (!this.newTransaction.amount) { alert("Amount is required!"); return; }
     if (!this.newTransaction.method) { alert("Payment Method is required!"); return; }
     if (!this.newTransaction.date) { alert("Date is required!"); return; }
+
     this.computeBalance(this.newTransaction);
-    student.transactions.push({ ...this.newTransaction });
-    this.saveToStorage();
-    window.dispatchEvent(new Event('storage'));
-    alert("Transaction added successfully!");
-    this.closeTransactionForm();
-    this.searchStudent();
+
+    this.http.post<any>(`${this.apiUrl}/transactions`, {
+      studentId: student.studentId,
+      ...this.newTransaction
+    }).subscribe({
+      next: () => {
+        alert("Transaction added successfully!");
+        this.loadRecords();
+        this.closeTransactionForm();
+        this.searchStudent();
+      },
+      error: (err) => alert(err.error?.error || "Failed to add transaction!")
+    });
   }
 
   openAddForm() { this.showAddForm = true; this.showTransactionForm = false; this.selectedRecord = null; }
@@ -173,45 +163,29 @@ export class Records implements OnInit {
     this.showAddForm = false; this.showTransactionForm = false;
   }
 
+  //  Send approval request 
   saveEdit() {
+    if (!this.selectedRecord) { alert("No record selected for editing."); return; }
 
-  if (!this.selectedRecord) {
-    alert("No record selected for editing.");
-    return;
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+
+    const approvalData = {
+      requestedBy: currentUser.username || 'Treasurer',
+      studentId: this.selectedRecord.studentId,
+      studentName: `${this.selectedRecord.firstName} ${this.selectedRecord.lastName}`,
+      requestedData: this.selectedRecord,
+      originalData: this.records[this.selectedIndex]
+    };
+
+    this.http.post<any>(`${this.apiUrl}/approvals`, approvalData).subscribe({
+      next: () => {
+        alert("Edit request sent to Admin for approval. Please wait.");
+        this.selectedRecord = null;
+        this.selectedIndex = -1;
+      },
+      error: (err) => alert(err.error?.error || "Failed to send approval request!")
+    });
   }
-
-  // ✅ SAVE APPROVAL REQUEST
-  const approvalRequest = {
-    id: Date.now(),
-    type: 'edit',
-    requestedBy: JSON.parse(localStorage.getItem('currentUser') || '{}').username || 'Treasurer',
-    studentId: this.selectedRecord.studentId,
-
-    // 🔥 FIXED: correct template string
-    studentName: `${this.selectedRecord.firstName} ${this.selectedRecord.lastName}`,
-
-    data: this.selectedRecord,
-    originalData: this.records[this.selectedIndex],
-    date: new Date().toLocaleDateString(),
-    status: 'pending'
-  };
-
-  // 🔥 FIXED: prevent overwrite (IMPORTANT)
-  const existing = JSON.parse(localStorage.getItem('pendingApproval') || '[]');
-
-  existing.push(approvalRequest);
-
-  localStorage.setItem('pendingApproval', JSON.stringify(existing));
-
-  // 🔥 notify admin
-  window.dispatchEvent(new Event('storage'));
-
-  alert("Edit request sent to Admin for approval. Please wait.");
-
-  // reset state
-  this.selectedRecord = null;
-  this.selectedIndex = -1;
-}
 
   cancelEdit() { this.selectedRecord = null; }
 
@@ -232,14 +206,25 @@ export class Records implements OnInit {
     return Object.values(feeTotals).map((f: any) => ({ fee: f.fee, balance: f.totalFee - f.paid })).filter((f: any) => f.balance > 0);
   }
 
+  
   deleteTransaction(index: number) {
     const student = this.filteredRecords[0];
     if (!student) return;
     if (!confirm("Are you sure you want to delete this transaction?")) return;
-    student.transactions.splice(index, 1);
-    this.saveToStorage();
-    window.dispatchEvent(new Event('storage'));
-    alert("Transaction deleted successfully!");
-    this.searchStudent();
+
+    const transaction = student.transactions[index];
+    if (!transaction?.id) {
+      alert("Transaction ID not found!");
+      return;
+    }
+
+    this.http.delete<any>(`${this.apiUrl}/transactions/${transaction.id}`).subscribe({
+      next: () => {
+        alert("Transaction deleted successfully!");
+        this.loadRecords();
+        this.searchStudent();
+      },
+      error: (err) => alert(err.error?.error || "Failed to delete transaction!")
+    });
   }
 }

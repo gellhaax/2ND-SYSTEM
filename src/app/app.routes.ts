@@ -2,14 +2,11 @@ import { Routes } from '@angular/router';
 import { adminGuard, treasurerGuard } from './guards/auth-guard';
 
 export const routes: Routes = [
-
   {
     path: 'login',
     loadComponent: () =>
       import('./login/login').then(m => m.Login)
   },
-
-  // ================= ADMIN =================
   {
     path: 'admin-dashboard',
     canActivate: [adminGuard],
@@ -18,21 +15,19 @@ export const routes: Routes = [
         .then(m => m.AdminDashboard)
   },
   {
-  path: 'admin-records',
-  canActivate: [adminGuard],
-  loadComponent: () =>
-    import('./pages/admin/admin-records/admin-records')
-      .then(m => m.AdminRecords)
-},
-{
-  path: 'admin-notifications',
-  canActivate: [adminGuard],
-  loadComponent: () =>
-    import('./pages/admin/admin-notifications/admin-notifications')
-      .then(m => m.AdminNotifications)
-},
-
-  // ================= TREASURER =================
+    path: 'admin-records',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./pages/admin/admin-records/admin-records')
+        .then(m => m.AdminRecords)
+  },
+  {
+    path: 'admin-notifications',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./pages/admin/admin-notifications/admin-notifications')
+        .then(m => m.AdminNotifications)
+  },
   {
     path: 'treasurer-dashboard',
     canActivate: [treasurerGuard],
@@ -75,7 +70,6 @@ export const routes: Routes = [
       import('./pages/treasurer/treasurer-contact/treasurer-contact')
         .then(m => m.TreasurerContactComponent)
   },
-
   {
     path: '',
     redirectTo: 'login',

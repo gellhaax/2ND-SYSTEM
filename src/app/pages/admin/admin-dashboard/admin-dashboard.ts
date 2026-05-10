@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { AdminNavbarComponent } from '../admin-navbar/admin-navbar';
 
 @Component({
@@ -12,38 +13,38 @@ import { AdminNavbarComponent } from '../admin-navbar/admin-navbar';
 })
 export class AdminDashboard implements OnInit {
 
+  private apiUrl = 'http://localhost:3000/api';
   currentUser: any = null;
   today = new Date();
   records: any[] = [];
 
+  constructor(private http: HttpClient) {}
+
   ngOnInit() {
     const user = localStorage.getItem('currentUser');
     if (user) this.currentUser = JSON.parse(user);
-    const data = localStorage.getItem('records');
-    this.records = data ? JSON.parse(data) : [];
+    this.loadRecords();
   }
 
-  get totalStudents(): number {
-    return this.records.length;
+
+  loadRecords() {
+    this.http.get<any[]>(`${this.apiUrl}/students`).subscribe({
+      next: (data) => { this.records = data; },
+      error: (err) => console.error('Error:', err)
+    });
   }
+
+  get totalStudents(): number { return this.records.length; }
 
   get totalCollected(): number {
     let total = 0;
-    this.records.forEach(s => {
-      (s.transactions || []).forEach((t: any) => {
-        total += Number(t.amount || 0);
-      });
-    });
+    this.records.forEach(s => { (s.transactions || []).forEach((t: any) => { total += Number(t.amount || 0); }); });
     return total;
   }
 
   get pendingBalance(): number {
     let total = 0;
-    this.records.forEach(s => {
-      (s.transactions || []).forEach((t: any) => {
-        total += Number(t.balance || 0);
-      });
-    });
+    this.records.forEach(s => { (s.transactions || []).forEach((t: any) => { total += Number(t.balance || 0); }); });
     return total;
   }
 
@@ -57,86 +58,44 @@ export class AdminDashboard implements OnInit {
     const all: any[] = [];
     this.records.forEach(s => {
       (s.transactions || []).forEach((t: any) => {
-        all.push({
-          name: `${s.firstName} ${s.lastName}`,
-          course: s.course + ' - ' + s.year,
-          amount: t.amount,
-          status: t.status,
-          date: t.date
-        });
+        all.push({ name: `${s.firstName} ${s.lastName}`, course: s.course + ' - ' + s.year, amount: t.amount, status: t.status, date: t.date });
       });
     });
     return all.slice(-5).reverse();
   }
-    get weeklyTotal(): number {
+
+  get weeklyTotal(): number {
     const now = new Date();
-
-    const firstDay = new Date(now);
-    firstDay.setDate(now.getDate() - now.getDay());
-
-    const lastDay = new Date(firstDay);
-    lastDay.setDate(firstDay.getDate() + 6);
-
+    const firstDay = new Date(now); firstDay.setDate(now.getDate() - now.getDay());
+    const lastDay = new Date(firstDay); lastDay.setDate(firstDay.getDate() + 6);
     let total = 0;
-
     this.records.forEach(s => {
       (s.transactions || []).forEach((t: any) => {
-
-        const paymentDate = new Date(t.date);
-
-        if (paymentDate >= firstDay && paymentDate <= lastDay) {
-          total += Number(t.amount || 0);
-        }
-
+        const d = new Date(t.date);
+        if (d >= firstDay && d <= lastDay) total += Number(t.amount || 0);
       });
     });
-
     return total;
   }
 
   get monthlyTotal(): number {
     const now = new Date();
-
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
     let total = 0;
-
     this.records.forEach(s => {
       (s.transactions || []).forEach((t: any) => {
-
-        const paymentDate = new Date(t.date);
-
-        if (
-          paymentDate.getMonth() === currentMonth &&
-          paymentDate.getFullYear() === currentYear
-        ) {
-          total += Number(t.amount || 0);
-        }
-
+        const d = new Date(t.date);
+        if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) total += Number(t.amount || 0);
       });
     });
-
     return total;
   }
 
-  get currentMonth(): string {
-    return this.today.toLocaleString('default', {
-      month: 'long',
-      year: 'numeric'
-    });
-  }
+  get currentMonth(): string { return this.today.toLocaleString('default', { month: 'long', year: 'numeric' }); }
 
   get weekRange(): string {
-
     const now = new Date();
-
-    const firstDay = new Date(now);
-    firstDay.setDate(now.getDate() - now.getDay());
-
-    const lastDay = new Date(firstDay);
-    lastDay.setDate(firstDay.getDate() + 6);
-
+    const firstDay = new Date(now); firstDay.setDate(now.getDate() - now.getDay());
+    const lastDay = new Date(firstDay); lastDay.setDate(firstDay.getDate() + 6);
     return `${firstDay.toLocaleDateString()} - ${lastDay.toLocaleDateString()}`;
   }
 }

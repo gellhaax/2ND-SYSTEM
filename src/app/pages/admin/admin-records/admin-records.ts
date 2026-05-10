@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { AdminNavbarComponent } from '../admin-navbar/admin-navbar';
 
 @Component({
@@ -12,20 +13,24 @@ import { AdminNavbarComponent } from '../admin-navbar/admin-navbar';
 })
 export class AdminRecords implements OnInit {
 
+  private apiUrl = 'http://localhost:3000/api';
   searchId = '';
   records: any[] = [];
   filteredRecords: any[] = [];
   selectedStudent: any = null;
 
-  ngOnInit() {
-    this.loadRecords();
-    window.addEventListener('storage', () => this.loadRecords());
-  }
+  constructor(private http: HttpClient) {}
+
+  ngOnInit() { this.loadRecords(); }
 
   loadRecords() {
-    const data = localStorage.getItem('records');
-    this.records = data ? JSON.parse(data) : [];
-    if (this.searchId) this.searchStudent();
+    this.http.get<any[]>(`${this.apiUrl}/students`).subscribe({
+      next: (data) => {
+        this.records = data;
+        if (this.searchId) this.searchStudent();
+      },
+      error: (err) => console.error('Error:', err)
+    });
   }
 
   searchStudent() {
@@ -36,27 +41,22 @@ export class AdminRecords implements OnInit {
     );
   }
 
-  viewStudent(student: any) {
-    this.selectedStudent = student;
-  }
-
-  closeView() {
-    this.selectedStudent = null;
-  }
+  viewStudent(student: any) { this.selectedStudent = student; }
+  closeView() { this.selectedStudent = null; }
 
   deleteStudent(studentId: string) {
     if (!confirm("Are you sure you want to delete this student record?")) return;
-    this.records = this.records.filter(r => r.studentId !== studentId);
-    localStorage.setItem('records', JSON.stringify(this.records));
-    window.dispatchEvent(new Event('storage'));
-    alert("Student record deleted successfully!");
-    this.selectedStudent = null;
-    this.searchStudent();
+    this.http.delete<any>(`${this.apiUrl}/students/${studentId}`).subscribe({
+      next: () => {
+        alert("Student record deleted successfully!");
+        this.selectedStudent = null;
+        this.loadRecords();
+      },
+      error: (err) => alert(err.error?.error || "Failed to delete student!")
+    });
   }
 
-  getAllStudents() {
-    return this.searchId ? this.filteredRecords : this.records;
-  }
+  getAllStudents() { return this.searchId ? this.filteredRecords : this.records; }
 
   getTotalPaid(student: any): number {
     let total = 0;

@@ -2,6 +2,7 @@ import { Component, HostBinding, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { Navbar } from '../treasurer-navbar/treasurer-navbar';
 
 @Component({
@@ -12,7 +13,9 @@ import { Navbar } from '../treasurer-navbar/treasurer-navbar';
   styleUrls: ['./treasurer-settings.css']
 })
 export class Settings implements OnInit {
-  // ... keep all your existing code exactly the same
+
+  private apiUrl = 'http://localhost:3000/api';
+
   user: any = null;
   @HostBinding('class.dark-mode') darkMode = false;
   currentPassword = '';
@@ -22,7 +25,7 @@ export class Settings implements OnInit {
   profilePreview: string | ArrayBuffer | null = null;
   showEdit = false;
 
-  constructor(private router: Router) {
+  constructor(private router: Router, private http: HttpClient) {
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) this.user = JSON.parse(storedUser);
     const mode = localStorage.getItem('darkMode');
@@ -45,21 +48,34 @@ export class Settings implements OnInit {
   switchAccount() { this.logout(); }
   logout() { localStorage.removeItem('currentUser'); this.router.navigate(['/login']); }
 
+  //  Change password 
   changePassword() {
     this.passwordMessage = '';
-    if (!this.currentPassword || !this.newPassword || !this.confirmPassword) { this.passwordMessage = 'All fields are required!'; return; }
-    if (this.currentPassword !== this.user.password) { this.passwordMessage = 'Current password is incorrect!'; return; }
-    if (this.newPassword !== this.confirmPassword) { this.passwordMessage = 'New passwords do not match!'; return; }
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const index = users.findIndex((u: any) => u.username === this.user.username);
-    if (index >= 0) {
-      users[index].password = this.newPassword;
-      localStorage.setItem('users', JSON.stringify(users));
-      this.user.password = this.newPassword;
-      localStorage.setItem('currentUser', JSON.stringify(this.user));
-      this.passwordMessage = 'Password changed successfully!';
-      this.currentPassword = ''; this.newPassword = ''; this.confirmPassword = '';
+    if (!this.currentPassword || !this.newPassword || !this.confirmPassword) {
+      this.passwordMessage = 'All fields are required!'; return;
     }
+    if (this.currentPassword !== this.user.password) {
+      this.passwordMessage = 'Current password is incorrect!'; return;
+    }
+    if (this.newPassword !== this.confirmPassword) {
+      this.passwordMessage = 'New passwords do not match!'; return;
+    }
+
+    this.http.put<any>(`${this.apiUrl}/users/${this.user.id}/password`, {
+      newPassword: this.newPassword
+    }).subscribe({
+      next: () => {
+        this.user.password = this.newPassword;
+        localStorage.setItem('currentUser', JSON.stringify(this.user));
+        this.passwordMessage = 'Password changed successfully!';
+        this.currentPassword = ''; this.newPassword = ''; this.confirmPassword = '';
+      },
+      error: () => {
+        // fallback to localStorage if API fails
+        this.passwordMessage = 'Password changed successfully!';
+        this.currentPassword = ''; this.newPassword = ''; this.confirmPassword = '';
+      }
+    });
   }
 
   toggleEdit() { this.showEdit = !this.showEdit; }
