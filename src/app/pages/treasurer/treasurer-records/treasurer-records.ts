@@ -28,6 +28,10 @@ export class Records implements OnInit, OnDestroy {
   selectedIndex = -1;
   pendingApproval: any = null;
 
+  // ✅ RECEIPT VIEWER
+  selectedReceipt: string = '';
+  showReceiptModal = false;
+
   feeMap: any = {
     "Organization fee": 100,
     "Usg Fee": 500,
@@ -41,7 +45,7 @@ export class Records implements OnInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private router: Router,
-    private cdr: ChangeDetectorRef  // ✅ ADD THIS
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -62,7 +66,7 @@ export class Records implements OnInit, OnDestroy {
     this.http.get<any[]>(`${this.apiUrl}/students`).subscribe({
       next: (data) => {
         this.records = data;
-        this.cdr.detectChanges(); // ✅ FORCE UPDATE
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Error loading records:', err)
     });
@@ -70,62 +74,141 @@ export class Records implements OnInit, OnDestroy {
 
   getEmptyRecord() {
     return {
-      studentId: '', firstName: '', middleName: '', lastName: '',
-      course: '', year: '', fee: '', amount: 0, method: '',
-      balance: 0, status: '', date: '', receipt: ''
+      studentId: '',
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      course: '',
+      year: '',
+      fee: '',
+      amount: 0,
+      method: '',
+      balance: 0,
+      status: '',
+      date: '',
+      receipt: ''
     };
   }
 
   getEmptyTransaction() {
     return {
-      fee: '', amount: 0, method: '', balance: 0,
-      status: '', date: '', receipt: ''
+      fee: '',
+      amount: 0,
+      method: '',
+      balance: 0,
+      status: '',
+      date: '',
+      receipt: ''
     };
   }
 
   computeBalance(record: any) {
     const fee = this.feeMap[record.fee] || 0;
+
     let paid = Number(record.amount || 0);
+
     if (paid < 0) paid = 0;
     if (paid > fee) paid = fee;
+
     record.amount = paid;
     record.balance = fee - paid;
     record.status = record.balance === 0 ? 'Paid' : 'Partial';
-    this.cdr.detectChanges(); // ✅ FORCE UPDATE
+
+    this.cdr.detectChanges();
   }
 
   onFileSelected(event: any, target: any) {
     const file = event.target.files[0];
+
     if (!file) return;
+
     const reader = new FileReader();
+
     reader.onload = () => {
       target.receipt = reader.result as string;
-      this.cdr.detectChanges(); // ✅ FORCE UPDATE
+      this.cdr.detectChanges();
     };
+
     reader.readAsDataURL(file);
+  }
+
+  // ✅ VIEW RECEIPT
+  viewReceipt(receipt: string) {
+    this.selectedReceipt = receipt;
+    this.showReceiptModal = true;
+    this.cdr.detectChanges();
+  }
+
+  // ✅ CLOSE RECEIPT
+  closeReceiptModal() {
+    this.showReceiptModal = false;
+    this.selectedReceipt = '';
+    this.cdr.detectChanges();
   }
 
   searchStudent() {
     const key = this.searchId.trim();
+
     if (!key) {
       this.filteredRecords = [];
-      this.cdr.detectChanges(); // ✅ FORCE UPDATE
+      this.cdr.detectChanges();
       return;
     }
-    this.filteredRecords = this.records.filter(r => r.studentId.includes(key));
-    this.cdr.detectChanges(); // ✅ FORCE UPDATE
+
+    this.filteredRecords =
+      this.records.filter(r =>
+        r.studentId.includes(key)
+      );
+
+    this.cdr.detectChanges();
   }
 
   addRecord() {
-    if (!this.newRecord.studentId?.trim()) { alert("Student ID is required!"); return; }
-    if (!this.newRecord.firstName?.trim()) { alert("First Name is required!"); return; }
-    if (!this.newRecord.lastName?.trim()) { alert("Last Name is required!"); return; }
-    if (!this.newRecord.course) { alert("Course is required!"); return; }
-    if (!this.newRecord.year) { alert("Year is required!"); return; }
-    if (!this.newRecord.fee) { alert("Fee is required!"); return; }
-    if (!this.newRecord.amount) { alert("Amount is required!"); return; }
-    if (!this.newRecord.method) { alert("Payment Method is required!"); return; }
-    if (!this.newRecord.date) { alert("Date is required!"); return; }
+
+    if (!this.newRecord.studentId?.trim()) {
+      alert("Student ID is required!");
+      return;
+    }
+
+    if (!this.newRecord.firstName?.trim()) {
+      alert("First Name is required!");
+      return;
+    }
+
+    if (!this.newRecord.lastName?.trim()) {
+      alert("Last Name is required!");
+      return;
+    }
+
+    if (!this.newRecord.course) {
+      alert("Course is required!");
+      return;
+    }
+
+    if (!this.newRecord.year) {
+      alert("Year is required!");
+      return;
+    }
+
+    if (!this.newRecord.fee) {
+      alert("Fee is required!");
+      return;
+    }
+
+    if (!this.newRecord.amount) {
+      alert("Amount is required!");
+      return;
+    }
+
+    if (!this.newRecord.method) {
+      alert("Payment Method is required!");
+      return;
+    }
+
+    if (!this.newRecord.date) {
+      alert("Date is required!");
+      return;
+    }
 
     this.computeBalance(this.newRecord);
 
@@ -152,7 +235,7 @@ export class Records implements OnInit, OnDestroy {
         alert("Student added successfully!");
         this.loadRecords();
         this.closeAddForm();
-        this.cdr.detectChanges(); // ✅ FORCE UPDATE
+        this.cdr.detectChanges();
       },
       error: (err) => alert(err.error?.error || "Failed to add student!")
     });
@@ -160,11 +243,28 @@ export class Records implements OnInit, OnDestroy {
 
   addTransaction() {
     const student = this.filteredRecords[0];
+
     if (!student) return;
-    if (!this.newTransaction.fee) { alert("Fee is required!"); return; }
-    if (!this.newTransaction.amount) { alert("Amount is required!"); return; }
-    if (!this.newTransaction.method) { alert("Payment Method is required!"); return; }
-    if (!this.newTransaction.date) { alert("Date is required!"); return; }
+
+    if (!this.newTransaction.fee) {
+      alert("Fee is required!");
+      return;
+    }
+
+    if (!this.newTransaction.amount) {
+      alert("Amount is required!");
+      return;
+    }
+
+    if (!this.newTransaction.method) {
+      alert("Payment Method is required!");
+      return;
+    }
+
+    if (!this.newTransaction.date) {
+      alert("Date is required!");
+      return;
+    }
 
     this.computeBalance(this.newTransaction);
 
@@ -177,7 +277,7 @@ export class Records implements OnInit, OnDestroy {
         this.loadRecords();
         this.closeTransactionForm();
         this.searchStudent();
-        this.cdr.detectChanges(); // ✅ FORCE UPDATE
+        this.cdr.detectChanges();
       },
       error: (err) => alert(err.error?.error || "Failed to add transaction!")
     });
@@ -187,47 +287,64 @@ export class Records implements OnInit, OnDestroy {
     this.showAddForm = true;
     this.showTransactionForm = false;
     this.selectedRecord = null;
-    this.cdr.detectChanges(); // ✅ FORCE UPDATE
+    this.cdr.detectChanges();
   }
 
   closeAddForm() {
     this.showAddForm = false;
     this.newRecord = this.getEmptyRecord();
-    this.cdr.detectChanges(); // ✅ FORCE UPDATE
+    this.cdr.detectChanges();
   }
 
   openTransactionForm() {
-    if (!this.filteredRecords.length) { alert("Search/select a student first."); return; }
+    if (!this.filteredRecords.length) {
+      alert("Search/select a student first.");
+      return;
+    }
+
     this.showTransactionForm = true;
     this.showAddForm = false;
     this.selectedRecord = null;
     this.newTransaction = this.getEmptyTransaction();
-    this.cdr.detectChanges(); // ✅ FORCE UPDATE
+
+    this.cdr.detectChanges();
   }
 
   closeTransactionForm() {
     this.showTransactionForm = false;
     this.newTransaction = this.getEmptyTransaction();
-    this.cdr.detectChanges(); // ✅ FORCE UPDATE
+    this.cdr.detectChanges();
   }
 
   editRecord(record: any) {
     this.selectedRecord = { ...record };
-    this.selectedIndex = this.records.findIndex(r => r.studentId === record.studentId);
+
+    this.selectedIndex =
+      this.records.findIndex(r =>
+        r.studentId === record.studentId
+      );
+
     this.showAddForm = false;
     this.showTransactionForm = false;
-    this.cdr.detectChanges(); // ✅ FORCE UPDATE
+
+    this.cdr.detectChanges();
   }
 
   saveEdit() {
-    if (!this.selectedRecord) { alert("No record selected for editing."); return; }
 
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    if (!this.selectedRecord) {
+      alert("No record selected for editing.");
+      return;
+    }
+
+    const currentUser =
+      JSON.parse(localStorage.getItem('currentUser') || '{}');
 
     const approvalData = {
       requestedBy: currentUser.username || 'Treasurer',
       studentId: this.selectedRecord.studentId,
-      studentName: `${this.selectedRecord.firstName} ${this.selectedRecord.lastName}`,
+      studentName:
+        `${this.selectedRecord.firstName} ${this.selectedRecord.lastName}`,
       requestedData: this.selectedRecord,
       originalData: this.records[this.selectedIndex]
     };
@@ -235,54 +352,93 @@ export class Records implements OnInit, OnDestroy {
     this.http.post<any>(`${this.apiUrl}/approvals`, approvalData).subscribe({
       next: () => {
         alert("Edit request sent to Admin for approval. Please wait.");
+
         this.selectedRecord = null;
         this.selectedIndex = -1;
-        this.cdr.detectChanges(); // ✅ FORCE UPDATE
+
+        this.cdr.detectChanges();
       },
-      error: (err) => alert(err.error?.error || "Failed to send approval request!")
+
+      error: (err) =>
+        alert(err.error?.error || "Failed to send approval request!")
     });
   }
 
   cancelEdit() {
     this.selectedRecord = null;
-    this.cdr.detectChanges(); // ✅ FORCE UPDATE
+    this.cdr.detectChanges();
   }
 
   getUniqueStudents() {
     const map = new Map();
-    this.records.forEach(r => { if (!map.has(r.studentId)) map.set(r.studentId, r); });
+
+    this.records.forEach(r => {
+      if (!map.has(r.studentId)) {
+        map.set(r.studentId, r);
+      }
+    });
+
     return Array.from(map.values());
   }
 
   getRemainingBalances(student: any) {
+
     if (!student || !student.transactions) return [];
+
     const feeTotals: any = {};
+
     student.transactions.forEach((t: any) => {
+
       const feeAmount = this.feeMap[t.fee] || 0;
-      if (!feeTotals[t.fee]) feeTotals[t.fee] = { fee: t.fee, totalFee: feeAmount, paid: 0 };
+
+      if (!feeTotals[t.fee]) {
+
+        feeTotals[t.fee] = {
+          fee: t.fee,
+          totalFee: feeAmount,
+          paid: 0
+        };
+      }
+
       feeTotals[t.fee].paid += Number(t.amount || 0);
     });
+
     return Object.values(feeTotals)
-      .map((f: any) => ({ fee: f.fee, balance: f.totalFee - f.paid }))
+      .map((f: any) => ({
+        fee: f.fee,
+        balance: f.totalFee - f.paid
+      }))
       .filter((f: any) => f.balance > 0);
   }
 
   deleteTransaction(index: number) {
+
     const student = this.filteredRecords[0];
+
     if (!student) return;
+
     if (!confirm("Are you sure you want to delete this transaction?")) return;
 
     const transaction = student.transactions[index];
-    if (!transaction?.id) { alert("Transaction ID not found!"); return; }
+
+    if (!transaction?.id) {
+      alert("Transaction ID not found!");
+      return;
+    }
 
     this.http.delete<any>(`${this.apiUrl}/transactions/${transaction.id}`).subscribe({
       next: () => {
+
         alert("Transaction deleted successfully!");
+
         this.loadRecords();
         this.searchStudent();
-        this.cdr.detectChanges(); // ✅ FORCE UPDATE
+
+        this.cdr.detectChanges();
       },
-      error: (err) => alert(err.error?.error || "Failed to delete transaction!")
+
+      error: (err) =>
+        alert(err.error?.error || "Failed to delete transaction!")
     });
   }
 }

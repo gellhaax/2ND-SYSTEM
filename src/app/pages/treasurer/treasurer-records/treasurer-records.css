@@ -170,3 +170,59 @@ tr:hover td {
 .cancel-btn:hover {
   background: #e2e8f0;
 }
+/* RECEIPT MODAL */
+
+.receipt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.receipt-modal {
+  background: white;
+  width: 90%;
+  max-width: 700px;
+  border-radius: 15px;
+  padding: 20px;
+  animation: pop .2s ease;
+}
+
+.receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.receipt-image {
+  width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.close-btn {
+  border: none;
+  background: crimson;
+  color: white;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

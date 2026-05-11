@@ -9,7 +9,7 @@ app.use(express.json({ limit: "10mb" }));
 
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+  port: Number(process.env.DB_PORT),
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME
@@ -236,7 +236,7 @@ app.put("/api/users/:id/password", (req, res) => {
 app.get("/api/notifications/:role", (req, res) => {
   const { role } = req.params;
   db.query(
-    "SELECT * FROM notifications WHERE recipientRole = ?"
+    "SELECT * FROM notifications WHERE recipientRole = ?",
     [role],
     (err, results) => {
       if (err) return res.status(500).json({ error: err.message });
