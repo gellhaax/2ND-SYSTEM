@@ -1,6 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { Router, NavigationEnd } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { Navbar } from '../treasurer-navbar/treasurer-navbar';
 
 @Component({
@@ -10,27 +13,48 @@ import { Navbar } from '../treasurer-navbar/treasurer-navbar';
   templateUrl: './treasurer-home.html',
   styleUrl: './treasurer-home.css',
 })
-export class Home implements OnInit {
+export class Home implements OnInit, OnDestroy {
 
   private apiUrl = 'http://localhost:3000/api';
+  private routerSub!: Subscription;
+
   records: any[] = [];
   notifications: any[] = [];
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private cdr: ChangeDetectorRef  // ✅ ADD THIS
+  ) {}
 
   ngOnInit() {
     this.loadData();
     this.loadNotifications();
     this.checkApprovalResult();
+
+    this.routerSub = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.loadData();
+      this.loadNotifications();
+      this.checkApprovalResult();
+    });
+
     window.addEventListener('storage', () => {
       this.checkApprovalResult();
     });
   }
 
- 
+  ngOnDestroy() {
+    if (this.routerSub) this.routerSub.unsubscribe();
+  }
+
   loadData() {
     this.http.get<any[]>(`${this.apiUrl}/students`).subscribe({
-      next: (data) => { this.records = data; },
+      next: (data) => {
+        this.records = data;
+        this.cdr.detectChanges(); // ✅ FORCE UPDATE
+      },
       error: (err) => console.error('Error:', err)
     });
   }
@@ -46,6 +70,7 @@ export class Home implements OnInit {
       this.addNotification("❌ Your request was REJECTED by Admin");
     }
     localStorage.removeItem('approvalResult');
+    this.cdr.detectChanges(); // ✅ FORCE UPDATE
   }
 
   loadNotifications() {
@@ -56,24 +81,42 @@ export class Home implements OnInit {
       this.notifications = [];
     }
     this.notifications = this.notifications
-      .map(n => ({ message: n.message || '', read: n.read ?? false, date: n.date ? new Date(n.date) : new Date() }))
+      .map(n => ({
+        message: n.message || '',
+        read: n.read ?? false,
+        date: n.date ? new Date(n.date) : new Date()
+      }))
       .sort((a, b) => b.date.getTime() - a.date.getTime());
+    this.cdr.detectChanges(); // ✅ FORCE UPDATE
   }
 
-  saveNotifications() { localStorage.setItem('notifications', JSON.stringify(this.notifications)); }
+  saveNotifications() {
+    localStorage.setItem('notifications', JSON.stringify(this.notifications));
+  }
 
   addNotification(message: string) {
     this.notifications.unshift({ message, read: false, date: new Date() });
     this.saveNotifications();
+    this.cdr.detectChanges(); // ✅ FORCE UPDATE
   }
 
-  markAsRead(notif: any) { notif.read = true; this.saveNotifications(); }
-  markAsUnread(notif: any) { notif.read = false; this.saveNotifications(); }
+  markAsRead(notif: any) {
+    notif.read = true;
+    this.saveNotifications();
+    this.cdr.detectChanges(); // ✅ FORCE UPDATE
+  }
+
+  markAsUnread(notif: any) {
+    notif.read = false;
+    this.saveNotifications();
+    this.cdr.detectChanges(); // ✅ FORCE UPDATE
+  }
 
   deleteNotification(notif: any) {
     if (!confirm('Delete this notification?')) return;
     this.notifications = this.notifications.filter(n => n !== notif);
     this.saveNotifications();
+    this.cdr.detectChanges(); // ✅ FORCE UPDATE
   }
 
   get totalCash(): number {

@@ -1,7 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Router, NavigationEnd } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { AdminNavbarComponent } from '../admin-navbar/admin-navbar';
 
 @Component({
@@ -11,23 +14,39 @@ import { AdminNavbarComponent } from '../admin-navbar/admin-navbar';
   templateUrl: './admin-notifications.html',
   styleUrl: './admin-notifications.css'
 })
-export class AdminNotifications implements OnInit {
+export class AdminNotifications implements OnInit, OnDestroy {
 
   private apiUrl = 'http://localhost:3000/api';
+  private routerSub!: Subscription;
+  private refreshInterval: any;
+
   requests: any[] = [];
 
-  notifications: any[] = [
-    { title: 'Tuition Fee Reminder', message: 'Tuition fee for 2nd Term is due on May 25, 2024.', type: 'Reminder', recipients: 'All Students', date: 'May 20, 2024', status: 'Unread' },
-    { title: 'Payment Received', message: 'A payment of ₱5,000.00 has been received for Juan Dela Cruz.', type: 'Information', recipients: 'Juan Dela Cruz', date: 'May 19, 2024', status: 'Read' },
-    { title: 'Overdue Notice', message: 'Your account has an overdue balance. Please pay as soon as possible.', type: 'Notice', recipients: 'Parents with Balance', date: 'May 18, 2024', status: 'Read' },
-    { title: 'Upcoming Fee Collection', message: 'Fee collection for 1st Term will start on June 1, 2024.', type: 'Announcement', recipients: 'All Students', date: 'May 17, 2024', status: 'Read' },
-  ];
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {}
 
-  constructor(private http: HttpClient) {}
+  ngOnInit() {
+    this.loadRequests();
 
-  ngOnInit() { this.loadRequests(); }
+    this.routerSub = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.loadRequests();
+    });
 
-  // Load 
+    this.refreshInterval = setInterval(() => {
+      this.loadRequests();
+    }, 5000);
+  }
+
+  ngOnDestroy() {
+    if (this.routerSub) this.routerSub.unsubscribe();
+    if (this.refreshInterval) clearInterval(this.refreshInterval);
+  }
+
   loadRequests() {
     this.http.get<any[]>(`${this.apiUrl}/approvals/pending`).subscribe({
       next: (data) => {
@@ -35,8 +54,14 @@ export class AdminNotifications implements OnInit {
           ...r,
           selected: false,
           requestedData: typeof r.requestedData === 'string' ? JSON.parse(r.requestedData) : r.requestedData,
-          originalData: typeof r.originalData === 'string' ? JSON.parse(r.originalData) : r.originalData
+          originalData: typeof r.originalData === 'string' ? JSON.parse(r.originalData) : r.originalData,
+          data: typeof r.requestedData === 'string' ? JSON.parse(r.requestedData) : r.requestedData,
+          date: r.created_at ? new Date(r.created_at).toLocaleDateString('en-PH', {
+            year: 'numeric', month: 'long', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          }) : 'Unknown date'
         }));
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Error loading approvals:', err)
     });
@@ -45,63 +70,75 @@ export class AdminNotifications implements OnInit {
   toggleSelectAll(event: any) {
     const checked = event.target.checked;
     this.requests.forEach(r => r.selected = checked);
+    this.cdr.detectChanges();
   }
 
   isAllSelected(): boolean {
     return this.requests.length > 0 && this.requests.every(r => r.selected);
   }
 
-  //  Approve
   approveSelected() {
     const selected = this.requests.filter(r => r.selected);
-    if (selected.length === 0) { alert('Select request first.'); return; }
+    if (selected.length === 0) { alert('Select a request first.'); return; }
 
     const approvals = selected.map(r =>
       this.http.put(`${this.apiUrl}/approvals/${r.id}`, { status: 'approved' }).toPromise()
     );
 
     Promise.all(approvals).then(() => {
-      // notify treasurer
-      localStorage.setItem('approvalResult', JSON.stringify({ status: 'approved', time: Date.now() }));
-      window.dispatchEvent(new Event('storage'));
+      this.saveTreasurerNotification('approved', selected);
       alert('Selected requests approved.');
       this.loadRequests();
-    }).catch(err => alert('Error approving requests'));
+    }).catch(() => alert('Error approving requests'));
   }
 
-  // Reject 
   declineSelected() {
     const selected = this.requests.filter(r => r.selected);
-    if (selected.length === 0) { alert('Select request first.'); return; }
+    if (selected.length === 0) { alert('Select a request first.'); return; }
 
     const rejections = selected.map(r =>
       this.http.put(`${this.apiUrl}/approvals/${r.id}`, { status: 'rejected' }).toPromise()
     );
 
     Promise.all(rejections).then(() => {
-      localStorage.setItem('approvalResult', JSON.stringify({ status: 'rejected', time: Date.now() }));
-      window.dispatchEvent(new Event('storage'));
+      this.saveTreasurerNotification('rejected', selected);
       alert('Selected requests declined.');
       this.loadRequests();
-    }).catch(err => alert('Error declining requests'));
+    }).catch(() => alert('Error declining requests'));
+  }
+
+  saveTreasurerNotification(status: 'approved' | 'rejected', selected: any[]) {
+    selected.forEach(r => {
+      const message = status === 'approved'
+        ? `✅ Admin APPROVED your edit request for student ${r.studentName} (${r.studentId})`
+        : `❌ Admin REJECTED your edit request for student ${r.studentName} (${r.studentId})`;
+
+      this.http.post(`${this.apiUrl}/notifications`, {
+        recipientRole: 'treasurer',
+        message: message
+      }).subscribe({
+        error: (err) => console.error('Failed to save notification:', err)
+      });
+    });
   }
 
   archiveSelected() {
     const selected = this.requests.filter(r => r.selected);
-    if (selected.length === 0) { alert('Select request first.'); return; }
+    if (selected.length === 0) { alert('Select a request first.'); return; }
     this.requests = this.requests.filter(r => !r.selected);
+    this.cdr.detectChanges();
     alert('Selected requests archived.');
   }
 
   deleteSelected() {
     const selected = this.requests.filter(r => r.selected);
-    if (selected.length === 0) { alert('Select request first.'); return; }
+    if (selected.length === 0) { alert('Select a request first.'); return; }
     if (!confirm('Delete selected requests permanently?')) return;
     this.requests = this.requests.filter(r => !r.selected);
+    this.cdr.detectChanges();
     alert('Selected requests deleted.');
   }
 
-  get totalNotifications() { return this.notifications.length + this.requests.length; }
-  get unreadCount() { return this.notifications.filter(n => n.status === 'Unread').length + this.requests.length; }
-  get importantCount() { return this.notifications.filter(n => n.type === 'Notice' || n.type === 'Reminder').length; }
+  get totalRequests() { return this.requests.length; }
+  get unreadCount() { return this.requests.length; }
 }

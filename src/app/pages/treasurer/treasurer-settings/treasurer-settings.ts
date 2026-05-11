@@ -1,8 +1,10 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, HostBinding, OnInit, OnDestroy } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { Navbar } from '../treasurer-navbar/treasurer-navbar';
 
 @Component({
@@ -12,9 +14,10 @@ import { Navbar } from '../treasurer-navbar/treasurer-navbar';
   templateUrl: './treasurer-settings.html',
   styleUrls: ['./treasurer-settings.css']
 })
-export class Settings implements OnInit {
+export class Settings implements OnInit, OnDestroy {
 
   private apiUrl = 'http://localhost:3000/api';
+  private routerSub!: Subscription;
 
   user: any = null;
   @HostBinding('class.dark-mode') darkMode = false;
@@ -36,6 +39,19 @@ export class Settings implements OnInit {
   ngOnInit(): void {
     const savedImage = localStorage.getItem('profileImage');
     if (savedImage) this.profilePreview = savedImage;
+
+    this.routerSub = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      const savedImage = localStorage.getItem('profileImage');
+      if (savedImage) this.profilePreview = savedImage;
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) this.user = JSON.parse(storedUser);
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.routerSub) this.routerSub.unsubscribe();
   }
 
   switchMode() {
@@ -45,10 +61,13 @@ export class Settings implements OnInit {
     else document.body.classList.remove('dark-mode');
   }
 
-  switchAccount() { this.logout(); }
-  logout() { localStorage.removeItem('currentUser'); this.router.navigate(['/login']); }
+  // ✅ REMOVED switchAccount() function
 
-  //  Change password 
+  logout() {
+    localStorage.removeItem('currentUser');
+    this.router.navigate(['/login']);
+  }
+
   changePassword() {
     this.passwordMessage = '';
     if (!this.currentPassword || !this.newPassword || !this.confirmPassword) {
@@ -68,12 +87,12 @@ export class Settings implements OnInit {
         this.user.password = this.newPassword;
         localStorage.setItem('currentUser', JSON.stringify(this.user));
         this.passwordMessage = 'Password changed successfully!';
-        this.currentPassword = ''; this.newPassword = ''; this.confirmPassword = '';
+        this.currentPassword = '';
+        this.newPassword = '';
+        this.confirmPassword = '';
       },
       error: () => {
-        // fallback to localStorage if API fails
-        this.passwordMessage = 'Password changed successfully!';
-        this.currentPassword = ''; this.newPassword = ''; this.confirmPassword = '';
+        this.passwordMessage = 'Failed to change password. Please try again.';
       }
     });
   }

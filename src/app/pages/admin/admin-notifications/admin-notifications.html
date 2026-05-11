@@ -17,7 +17,6 @@
         <button class="archive-btn" (click)="archiveSelected()">
           📦 Archive
         </button>
-
         <button class="delete-btn" (click)="deleteSelected()">
           🗑 Delete
         </button>
@@ -28,7 +27,6 @@
         <button class="approve-btn" (click)="approveSelected()">
           ✅ Approve
         </button>
-
         <button class="decline-btn" (click)="declineSelected()">
           ❌ Decline
         </button>
@@ -44,78 +42,76 @@
           [checked]="isAllSelected()"
           (change)="toggleSelectAll($event)"
         />
-        Select All
+        Select All ({{ totalRequests }} pending)
       </label>
     </div>
 
     <!-- REQUEST LIST -->
     <div class="request-container">
 
-      <div
-        class="request-card"
-        *ngFor="let request of requests"
-      >
+      <div class="request-card" *ngFor="let request of requests">
 
         <!-- CHECKBOX -->
         <div class="checkbox-area">
-          <input
-            type="checkbox"
-            [(ngModel)]="request.selected"
-          />
+          <input type="checkbox" [(ngModel)]="request.selected" />
         </div>
 
         <!-- ICON -->
-        <div class="profile-icon">
-          👤
-        </div>
+        <div class="profile-icon">👤</div>
 
         <!-- CONTENT -->
         <div class="request-content">
 
           <div class="request-header">
             <h3>Edit Request from Treasurer</h3>
-
-            <span class="request-date">
-              📅 {{ request.date }}
-            </span>
+            <span class="request-date">📅 {{ request.date }}</span>
           </div>
 
           <p class="request-message">
-            Treasurer
-            <strong>{{ request.requestedBy }}</strong>
+            Treasurer <strong>{{ request.requestedBy }}</strong>
             requested changes for student
             <strong>{{ request.studentName }}</strong>
             ({{ request.studentId }}).
           </p>
 
-          <!-- DETAILS -->
-          <div class="details-grid">
-
-            <div>
-              <span>Course:</span>
-              <strong>{{ request.data.course }}</strong>
-            </div>
-
-            <div>
-              <span>Year:</span>
-              <strong>{{ request.data.year }}</strong>
-            </div>
+          <!-- ✅ FIXED: was request.data — now request.requestedData -->
+          <div class="details-grid" *ngIf="request.requestedData">
 
             <div>
               <span>First Name:</span>
-              <strong>{{ request.data.firstName }}</strong>
+              <strong>{{ request.requestedData.firstName }}</strong>
             </div>
 
             <div>
               <span>Middle Name:</span>
-              <strong>{{ request.data.middleName }}</strong>
+              <strong>{{ request.requestedData.middleName }}</strong>
             </div>
 
             <div>
               <span>Last Name:</span>
-              <strong>{{ request.data.lastName }}</strong>
+              <strong>{{ request.requestedData.lastName }}</strong>
             </div>
 
+            <div>
+              <span>Course:</span>
+              <strong>{{ request.requestedData.course }}</strong>
+            </div>
+
+            <div>
+              <span>Year:</span>
+              <strong>{{ request.requestedData.year }}</strong>
+            </div>
+
+          </div>
+
+          <!-- ✅ SHOW ORIGINAL vs REQUESTED comparison -->
+          <div class="compare-note" *ngIf="request.originalData">
+            <small>
+              Original: {{ request.originalData.firstName }}
+              {{ request.originalData.lastName }} —
+              {{ request.originalData.course }}
+              Yr. {{ request.originalData.year }}
+            </small>
           </div>
 
         </div>
@@ -124,7 +120,7 @@
 
       <!-- EMPTY -->
       <div class="empty-box" *ngIf="requests.length === 0">
-        🔔 No request notifications available.
+        🔔 No pending request notifications.
       </div>
 
     </div>
