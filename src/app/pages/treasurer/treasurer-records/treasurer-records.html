@@ -1,5 +1,3 @@
-
-
 <app-navbar></app-navbar>
 <div class="treasurer-page">
 
@@ -175,10 +173,17 @@
                   {{ t.status }}
                 </span>
               </td>
-              <td>
-                <a *ngIf="t.receipt" [href]="t.receipt" target="_blank">View</a>
-                <span *ngIf="!t.receipt">No File</span>
-              </td>
+             <td>
+  <a
+    *ngIf="t.receipt"
+    [href]="'http://localhost:3000/api/receipt/' + t.id"
+    target="_blank"
+  >
+    View
+  </a>
+
+  <span *ngIf="!t.receipt">No File</span>
+</td>
               <td>
                 <button (click)="deleteTransaction(i)">Delete</button>
               </td>
